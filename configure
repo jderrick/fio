@@ -1246,6 +1246,10 @@ pwritev2="no"
 cat > $TMPC << EOF
 #include <stdio.h>
 #include <sys/uio.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#define preadv2(...) syscall(SYS_preadv2, __VA_ARGS__)
+#define pwritev2(...) syscall(SYS_pwritev2, __VA_ARGS__)
 int main(int argc, char **argv)
 {
   return pwritev2(0, NULL, 1, 0, 0) + preadv2(0, NULL, 1, 0, 0);

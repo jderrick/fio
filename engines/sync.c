@@ -15,6 +15,14 @@
 #include "../fio.h"
 #include "../optgroup.h"
 
+#include <sys/syscall.h>
+#define preadv2(...) syscall(SYS_preadv2, __VA_ARGS__)
+#define pwritev2(...) syscall(SYS_pwritev2, __VA_ARGS__)
+#define LO_HI_LONG(val) \
+ (off_t) val, \
+ (off_t) ((((uint64_t) (val)) >> (sizeof (long) * 4)) >> (sizeof (long) * 4))
+
+
 /*
  * Sync engine uses engine_data to store last offset
  */
@@ -139,9 +147,9 @@ static int fio_pvsyncio2_queue(struct thread_data *td, struct io_u *io_u)
 	iov->iov_len = io_u->xfer_buflen;
 
 	if (io_u->ddir == DDIR_READ)
-		ret = preadv2(f->fd, iov, 1, io_u->offset, flags);
+		ret = preadv2(f->fd, iov, 1, LO_HI_LONG(io_u->offset), flags);
 	else if (io_u->ddir == DDIR_WRITE)
-		ret = pwritev2(f->fd, iov, 1, io_u->offset, flags);
+		ret = pwritev2(f->fd, iov, 1, LO_HI_LONG(io_u->offset), flags);
 	else if (io_u->ddir == DDIR_TRIM) {
 		do_io_u_trim(td, io_u);
 		return FIO_Q_COMPLETED;
